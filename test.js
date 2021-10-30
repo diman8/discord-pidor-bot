@@ -34,4 +34,4 @@ let game = new Game(adapter, repository, gamesRepository);
 
 // game.CanStartGame(123).then(r => console.log(r)).catch(reject => console.log(reject));
 
-game.run("237520435389005825").then(r => console.log(r)).catch(r => console.log(r));
+game.run("process.env.BOT_CLIENT_ID").then(r => console.log(r)).catch(r => console.log(r));
