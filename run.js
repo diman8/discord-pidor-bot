@@ -9,7 +9,11 @@ const ParticipantRepository = require("./src/Repositories/ParticipantRepository"
 const Game = require("./src/Game");
 const DbAdapter = require("./src/DbAdapter");
 
-const db = new sqlite3.Database('database.db3');
+const db = new sqlite3.Database('/etc/discord-p-bot/database.db3');
+
+db.run("CREATE TABLE IF NOT EXISTS participants (id INTEGER PRIMARY KEY AUTOINCREMENT, discord_guild_id TEXT, discord_user_id TEXT, discord_user_name TEXT, score INTEGER)");
+db.run("CREATE TABLE IF NOT EXISTS games (id INTEGER PRIMARY KEY AUTOINCREMENT, discord_guild_id TEXT, winner_participant_id INTEGER, datetime INTEGER)");
+
 const dbAdapter = new DbAdapter(db);
 const gamesRepository = new GamesRepository(dbAdapter);
 const participantsRepository = new ParticipantRepository(dbAdapter);
@@ -21,10 +25,10 @@ DiscordClient.on('message', msg => {
             .IsParticipantExists(msg.author.id, msg.guild.id)
             .then(isExists => {
                 if (isExists) {
-                    ChatFunctions.temporaryMessage(msg.channel, "You're already participating in this game, silly", 7000);
+                    ChatFunctions.temporaryMessage(msg.channel, "Ты уже в игре, забыл чтоли? :thinking:", 7000);
                 } else {
                     participantsRepository.AddParticipant(msg.author.id, msg.guild.id, ChatFunctions.getNickname(msg));
-                    ChatFunctions.temporaryMessage(msg.channel, "Alright, you're in, " + ChatFunctions.getNickname(msg), 5000)
+                    ChatFunctions.temporaryMessage(msg.channel, "Приветствуем тебя, " + ChatFunctions.getNickname(msg), 5000)
                 }
             });
 
@@ -56,17 +60,44 @@ DiscordClient.on('message', msg => {
     }
 
     if (msg.content.match(/^!исключить/)) {
-        let chunks = msg.message.split(' ');
+        let chunks = msg.cleanContent.split(' ');
         chunks.splice(0, 1);
         let discordId = chunks.join('');
 
-        if (msg.author.id !== '207169330549358592') {
+        if (msg.author.id !== process.env.ADMIN_USERID) {
             ChatFunctions.temporaryMessage(msg.channel, "Вы кто такой? Я вас не звал. Идите нахуй!");
-        } else {
-            ChatFunctions.temporaryMessage(msg.channel, "Пидарнул пидорка нахуй");
+            // ChatFunctions.deleteMessage(msg, 3000);
+            return;
         }
-        ChatFunctions.deleteMessage(msg, 3000);
+        ChatFunctions.temporaryMessage(msg.channel, "Пидарнул пидорка нахуй");
+        // ChatFunctions.deleteMessage(msg, 3000);
         participantsRepository.RemoveParticipant(discordId, msg.guild.id)
+        return;
+    }
+    
+    if (msg.content.match(/^!добавитьдружка/)) {
+
+        if (msg.author.id !== process.env.ADMIN_USERID) {
+            ChatFunctions.temporaryMessage(msg.channel, "У тебя нет здесь власти.");
+            // ChatFunctions.deleteMessage(msg, 3000);
+            return;
+        }
+        
+        
+        if (!msg.mentions.everyone)
+        {
+            let mentionedUser = msg.mentions.users.first();
+            participantsRepository
+                .IsParticipantExists(mentionedUser.id, msg.guild.id)
+                .then(isExists => {
+                    if (isExists) {
+                        ChatFunctions.temporaryMessage(msg.channel, "Так " + mentionedUser.username + " уже играет. :grin:", 7000);
+                    } else {
+                        participantsRepository.AddParticipant(mentionedUser.id, msg.guild.id, ChatFunctions.getNickname(msg));
+                        ChatFunctions.temporaryMessage(msg.channel, "Тебя пригласили в игру, " + "<@" + mentionedUser.id + ">", 5000)
+                    }
+                });
+        }
         return;
     }
 });

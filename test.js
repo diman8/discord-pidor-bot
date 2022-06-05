@@ -4,7 +4,7 @@ let GamesRepository = require('./src/Repositories/GamesRepository');
 let Game = require('./src/Game');
 
 let sqlite3 = require('sqlite3').verbose();
-let db = new sqlite3.Database('../database.db3');
+let db = new sqlite3.Database('/etc/discord-p-bot/database.db3');
 
 let adapter = new DbAdapter(db);
 // let participants = adapter.get("SELECT * FROM participants", {})

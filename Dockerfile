@@ -3,8 +3,10 @@ WORKDIR /app
 
 COPY . .
 
+# RUN rm -r /app/.git
+RUN mkdir /etc/discord-p-bot
 RUN npm install --production
-RUN nodejs install.js
+# RUN nodejs install.js
 
 # delete npm and libs to reduce image size
 RUN rm -r /opt/*
